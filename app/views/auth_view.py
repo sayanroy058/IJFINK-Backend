@@ -31,3 +31,30 @@ def login():
                 "message": "Unexpected server error during login.",
             }
         ), 500
+
+
+@auth_blueprint.post("/register")
+def register():
+    payload = request.get_json(silent=True) or {}
+
+    try:
+        response, status_code = AuthController.register(
+            payload=payload,
+            secret_key=current_app.config["SECRET_KEY"],
+            authorization_header=request.headers.get("Authorization"),
+        )
+        return jsonify(response), status_code
+    except MySQLError:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Database connection failed during registration.",
+            }
+        ), 500
+    except Exception:
+        return jsonify(
+            {
+                "success": False,
+                "message": "Unexpected server error during registration.",
+            }
+        ), 500
