@@ -10,6 +10,9 @@ ROLE_ALIASES = {
     "author": "Author",
     "admin": "Admin",
     "editor": "Editor",
+    "chief editor": "Editor",
+    "chief_editor": "Editor",
+    "chief-editor": "Editor",
     "publication team": "Publication Team",
     "publication_team": "Publication Team",
     "publication-team": "Publication Team",
@@ -18,7 +21,6 @@ ROLE_ALIASES = {
 ROLE_DASHBOARD_MAP = {
     "Author": "/dashboard/author",
     "Admin": "/dashboard/admin",
-    "Editor": "/dashboard/editor",
     "Publication Team": "/dashboard/publication-team",
 }
 
@@ -31,10 +33,10 @@ class AuthController:
         selected_role = AuthController._normalize_role(payload.get("role"))
         remember_me = bool(payload.get("remember_me", False))
 
-        if not email or not password or not selected_role:
+        if not email or not password:
             return {
                 "success": False,
-                "message": "Email, password, and role are required.",
+                "message": "Email and password are required.",
             }, 400
 
         user = UserModel.find_by_email(email)
@@ -50,7 +52,7 @@ class AuthController:
                 "message": "This account is inactive. Please contact support.",
             }, 403
 
-        if user["role"] != selected_role:
+        if selected_role and user["role"] != selected_role:
             return {
                 "success": False,
                 "message": f"This account is registered as {user['role']}, not {selected_role}.",
@@ -63,6 +65,7 @@ class AuthController:
             }, 401
 
         profile = UserModel.get_role_profile(user["user_id"], user["role"])
+        redirect_to = AuthController._resolve_dashboard_route(user["role"], profile)
         token = AuthController._generate_token(
             secret_key=secret_key,
             user_id=user["user_id"],
@@ -85,7 +88,7 @@ class AuthController:
                     "status": user["status"],
                     "display_name": (profile or {}).get("display_name"),
                     "profile_id": (profile or {}).get("profile_id"),
-                    "redirect_to": ROLE_DASHBOARD_MAP[user["role"]],
+                    "redirect_to": redirect_to,
                 },
             },
         }, 200
@@ -110,3 +113,11 @@ class AuthController:
             },
             salt="ijfink-auth",
         )
+
+    @staticmethod
+    def _resolve_dashboard_route(role, profile):
+        if role == "Editor":
+            is_chief_editor = bool((profile or {}).get("is_chief_editor"))
+            return "/dashboard/chief-editor" if is_chief_editor else "/dashboard/editor"
+
+        return ROLE_DASHBOARD_MAP.get(role, "/dashboard")
