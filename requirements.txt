@@ -1,0 +1,5 @@
+Flask==2.3.2
+python-dotenv==1.0.0
+redis==4.5.5
+mysql-connector-python==8.0.33
+SQLAlchemy==2.0.19
