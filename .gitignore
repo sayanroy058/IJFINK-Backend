@@ -2,6 +2,7 @@
 .env
 .env.*
 !.env.example
+venv
 
 # Dependencies
 node_modules/
@@ -25,4 +26,4 @@ Thumbs.db
 .vscode/
 .idea/
 
-venv
+.creds
