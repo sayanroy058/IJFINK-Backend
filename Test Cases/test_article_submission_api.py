@@ -11,6 +11,7 @@ import io
 import json
 import os
 import sys
+import secrets
 import time
 import uuid
 from datetime import datetime
@@ -26,15 +27,36 @@ AUTH_ENDPOINT = f"{BASE_URL}/api/auth"
 USER_ENDPOINT = f"{BASE_URL}/api/user"
 
 
+RUN_ID = f"{int(time.time())}{uuid.uuid4().hex[:8]}"
+
+
+def generate_unique_email(prefix):
+    return f"{prefix}.{RUN_ID}@example.com"
+
+
+def generate_unique_orcid():
+    digits = [secrets.randbelow(10) for _ in range(15)]
+    total = 0
+
+    for digit in digits:
+        total = (total + digit) * 2
+
+    remainder = total % 11
+    check_digit = (12 - remainder) % 11
+    check_character = "X" if check_digit == 10 else str(check_digit)
+    orcid_digits = "".join(str(digit) for digit in digits) + check_character
+    return "-".join(orcid_digits[index : index + 4] for index in range(0, 16, 4))
+
+
 TEST_AUTHOR_REGISTRATION = {
     "first_name": "Article",
     "last_name": "Author",
-    "email": f"article.author.{int(time.time())}.{uuid.uuid4().hex[:6]}@example.com",
+    "email": generate_unique_email("article.author"),
     "password": "ArticleAuthor@123",
     "confirm_password": "ArticleAuthor@123",
     "institution": "IJFINK Test Institute",
     "role": "Author",
-    "orcid": "0000-0000-0000-000X",
+    "orcid": generate_unique_orcid(),
 }
 
 
@@ -47,16 +69,16 @@ ARTICLE_PAYLOAD = {
     "co_authors": [
         {
             "full_name": "Co Author One",
-            "email": "coauthor.one@example.com",
+            "email": generate_unique_email("coauthor.one"),
             "institution": "Institute One",
-            "orcid": "0000-0000-0000-0001",
+            "orcid": generate_unique_orcid(),
             "author_order": 1,
         },
         {
             "full_name": "Co Author Two",
-            "email": "coauthor.two@example.com",
+            "email": generate_unique_email("coauthor.two"),
             "institution": "Institute Two",
-            "orcid": "0000-0000-0000-0002",
+            "orcid": generate_unique_orcid(),
             "author_order": 2,
         },
     ],
