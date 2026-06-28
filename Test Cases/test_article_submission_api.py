@@ -239,6 +239,50 @@ def register_author(registration_data):
     return None
 
 
+def assert_failure(response, expected_statuses, success_message, error_message):
+    if response["status_code"] in expected_statuses:
+        print_success(success_message)
+        return True
+
+    print_error(error_message)
+    return False
+
+
+def test_registration_rejects_mismatched_passwords():
+    print_section("TEST: REGISTRATION REJECTS MISMATCHED PASSWORDS")
+    payload = dict(TEST_AUTHOR_REGISTRATION)
+    payload["email"] = generate_unique_email("article.author.invalid")
+    payload["orcid"] = generate_unique_orcid()
+    payload["confirm_password"] = "WrongPassword@123"
+
+    print_request("POST", f"{AUTH_ENDPOINT}/register", body=payload)
+    response = send_request("POST", f"{AUTH_ENDPOINT}/register", json_body=payload)
+    print_response(response)
+
+    assert_failure(
+        response,
+        {400, 422},
+        "Registration correctly rejected mismatched passwords.",
+        "Registration should reject mismatched passwords.",
+    )
+
+
+def test_registration_rejects_duplicate_email():
+    print_section("TEST: REGISTRATION REJECTS DUPLICATE EMAIL")
+    payload = dict(TEST_AUTHOR_REGISTRATION)
+
+    print_request("POST", f"{AUTH_ENDPOINT}/register", body=payload)
+    response = send_request("POST", f"{AUTH_ENDPOINT}/register", json_body=payload)
+    print_response(response)
+
+    assert_failure(
+        response,
+        {400, 409},
+        "Registration correctly rejected duplicate email.",
+        "Registration should reject duplicate email.",
+    )
+
+
 def build_submission_files():
     return [
         ("main_manuscript", ("main-manuscript.txt", b"Main manuscript content", "text/plain")),
@@ -350,6 +394,26 @@ def test_author_auth_required():
         print_error("Endpoint should reject unauthenticated access.")
 
 
+def test_login_rejects_wrong_password():
+    print_section("TEST: LOGIN REJECTS WRONG PASSWORD")
+    payload = {
+        "email": TEST_AUTHOR_REGISTRATION["email"],
+        "password": "DefinitelyWrong@123",
+        "role": "Author",
+    }
+
+    print_request("POST", f"{AUTH_ENDPOINT}/login", body=payload)
+    response = send_request("POST", f"{AUTH_ENDPOINT}/login", json_body=payload)
+    print_response(response)
+
+    assert_failure(
+        response,
+        {400, 401},
+        "Login correctly rejected invalid credentials.",
+        "Login should reject invalid credentials.",
+    )
+
+
 def main():
     print(f"\n{Colors.BLUE}")
     print("╔" + "=" * 78 + "╗")
@@ -379,6 +443,10 @@ def main():
     registered_user = register_author(TEST_AUTHOR_REGISTRATION)
     if not registered_user:
         return
+
+    test_registration_rejects_mismatched_passwords()
+    test_registration_rejects_duplicate_email()
+    test_login_rejects_wrong_password()
 
     token, user = login(
         {
