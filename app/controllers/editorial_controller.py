@@ -1,4 +1,3 @@
-from datetime import datetime
 from mysql.connector import Error as MySQLError
 
 from database import get_db_connection
@@ -272,6 +271,13 @@ class EditorialController:
                 )
                 assignment_id = cursor.lastrowid
 
+                cursor.execute(
+                    "SELECT assigned_at FROM editorial_assignment WHERE assignment_id = %s",
+                    (assignment_id,),
+                )
+                assigned_row = cursor.fetchone()
+                assigned_at = assigned_row["assigned_at"] if assigned_row else None
+
             connection.commit()
 
             return {
@@ -283,7 +289,7 @@ class EditorialController:
                     "editor_id": editor_id,
                     "admin_id": admin_id,
                     "status": "Active",
-                    "assigned_at": datetime.now().isoformat(),
+                    "assigned_at": assigned_at.isoformat() if assigned_at else None,
                 },
             }, 201
 
