@@ -99,10 +99,13 @@ class ContactController:
         Args:
             secret_key: Secret key for JWT validation
             authorization_header: Authorization header with JWT token
-            filters: Dict with optional filters (status, assigned_to_me)
-            
+            filters: Dict with optional filters (status)
+
         Returns:
             Tuple of (response_dict, status_code)
+
+        Any authenticated Admin can view every contact query. Non-admin
+        callers are rejected with 403.
         """
         
         # Validate the requesting user is an authenticated admin
@@ -122,14 +125,13 @@ class ContactController:
         
         filters = filters or {}
         status_filter = filters.get("status")
-        assigned_to_me = filters.get("assigned_to_me", "false").lower() == "true"
-        
+
         connection = None
         try:
             connection = get_db_connection()
-            
+
             query = """
-                SELECT 
+                SELECT
                     cq.query_id,
                     cq.first_name,
                     cq.last_name,
@@ -140,8 +142,8 @@ class ContactController:
                     cq.created_at,
                     cq.resolved_at,
                     cq.admin_id,
-                    CASE 
-                        WHEN a.admin_id IS NOT NULL 
+                    CASE
+                        WHEN a.admin_id IS NOT NULL
                         THEN CONCAT(a.first_name, ' ', a.last_name)
                         ELSE NULL
                     END AS assigned_admin_name
@@ -149,25 +151,13 @@ class ContactController:
                 LEFT JOIN admins a ON a.admin_id = cq.admin_id
                 WHERE 1=1
             """
-            
+
             params = []
-            
+
             if status_filter:
                 query += " AND cq.status = %s"
                 params.append(status_filter)
-            
-            if assigned_to_me:
-                # Get current admin's admin_id
-                admin_query = "SELECT admin_id FROM admins WHERE user_id = %s"
-                with connection.cursor() as cursor:
-                    cursor.execute(admin_query, (actor["user_id"],))
-                    admin_result = cursor.fetchone()
-                    admin_id = admin_result[0] if admin_result else None
-                
-                if admin_id:
-                    query += " AND cq.admin_id = %s"
-                    params.append(admin_id)
-            
+
             query += " ORDER BY cq.created_at DESC"
             
             with connection.cursor(dictionary=True) as cursor:
@@ -198,7 +188,6 @@ class ContactController:
                     "total_count": len(queries_data),
                     "filters_applied": {
                         "status": status_filter,
-                        "assigned_to_me": assigned_to_me,
                     }
                 },
             }, 200
