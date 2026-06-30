@@ -10,6 +10,7 @@ A Flask-based backend for the IJFINK application. It provides authentication, us
 - User registration for Authors, Admins, Editors, and Publication Team members
 - Admin user management endpoints
 - Contact query submission and admin review endpoints
+- Publication Team workflow for final publication records
 - Health check endpoint
 - MySQL database integration
 
@@ -211,6 +212,67 @@ See [README_Server.md](README_Server.md) for the full VPS setup (firewall, nohup
     "status": "Resolved"
   }
   ```
+
+## Publication Endpoints
+
+> All Publication endpoints require `Authorization: Bearer <token>` for a `Publication Team` user.
+
+#### List Accepted Articles
+
+- `GET /api/publication/accepted-articles`
+- Returns articles in `Accepted` status that are ready for publication review.
+
+#### Start Publication Review
+
+- `POST /api/publication/articles/<article_id>/start-review`
+- Moves an article from `Accepted` to `Publication Review`.
+
+#### Return To Editor
+
+- `POST /api/publication/articles/<article_id>/return-to-editor`
+- Request body:
+  ```json
+  {
+    "feedback": "Please correct the reference formatting before external submission."
+  }
+  ```
+- Moves the article back to `Editorial Review` and notifies the latest assigned editor.
+
+#### Submit To Organization
+
+- `POST /api/publication/articles/<article_id>/submit-organization`
+- Request body:
+  ```json
+  {
+    "organization_name": "IEEE",
+    "remarks": "Submitted to external publisher."
+  }
+  ```
+- Moves the article from `Publication Review` to `Submitted To Organization`.
+
+#### Reject After Organization Decision
+
+- `POST /api/publication/articles/<article_id>/reject`
+- Request body:
+  ```json
+  {
+    "remarks": "Rejected by external organization."
+  }
+  ```
+- Moves the article from `Submitted To Organization` to `Rejected`.
+
+#### Publish Article
+
+- `POST /api/publication/articles/<article_id>/publish`
+- Multipart form fields:
+  - `publication_data` JSON with `organization_name`, `doi`, `article_url`, `volume`, `issue`, `pages`, `publication_date`
+  - `published_file` final PDF/DOC file
+- Creates the final `publications` row, stores the file under `Published/`, and moves the article to `Published`.
+
+#### Published Records
+
+- `GET /api/publication/published`
+- `GET /api/publication/published/<article_id>`
 
 ## Testing
 

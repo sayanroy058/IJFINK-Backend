@@ -114,6 +114,8 @@ CREATE TABLE articles (
         'Editorial Review',
         'Revision Requested',
         'Accepted',
+        'Publication Review',
+        'Submitted To Organization',
         'Rejected',
         'Published'
     ) NOT NULL DEFAULT 'Submitted',
@@ -127,6 +129,8 @@ CREATE TABLE articles (
         'Editorial Review',
         'Revision Requested',
         'Accepted',
+        'Publication Review',
+        'Submitted To Organization',
         'Rejected',
         'Published'
     )),
@@ -321,12 +325,16 @@ CREATE TABLE publications (
     publication_id INT AUTO_INCREMENT PRIMARY KEY,
     article_id INT NOT NULL,
     publication_team_id INT NOT NULL,
+    organization_name VARCHAR(255) NOT NULL,
     doi VARCHAR(255) NOT NULL,
     article_url VARCHAR(700) NOT NULL,
     volume VARCHAR(50) NOT NULL,
     issue VARCHAR(50) NOT NULL,
     pages VARCHAR(50) NOT NULL,
     publication_date DATE NOT NULL,
+    published_file_name VARCHAR(255),
+    published_file_path VARCHAR(1000),
+    published_file_type VARCHAR(100),
     CONSTRAINT uq_publications_article UNIQUE (article_id),
     CONSTRAINT uq_publications_doi UNIQUE (doi),
     CONSTRAINT uq_publications_article_url UNIQUE (article_url),
@@ -443,6 +451,7 @@ CREATE INDEX idx_revisions_author_id ON revisions(author_id);
 
 CREATE INDEX idx_publications_article_id ON publications(article_id);
 CREATE INDEX idx_publications_publication_team_id ON publications(publication_team_id);
+CREATE INDEX idx_publications_organization_name ON publications(organization_name);
 CREATE INDEX idx_publications_publication_date ON publications(publication_date);
 CREATE INDEX idx_publications_doi ON publications(doi);
 CREATE INDEX idx_publications_article_url ON publications(article_url(191));
@@ -858,9 +867,9 @@ CREATE TRIGGER trg_publications_before_insert
 BEFORE INSERT ON publications
 FOR EACH ROW
 BEGIN
-    IF (SELECT status FROM articles WHERE article_id = NEW.article_id) <> 'Accepted' THEN
+    IF (SELECT status FROM articles WHERE article_id = NEW.article_id) <> 'Submitted To Organization' THEN
         SIGNAL SQLSTATE '45000'
-            SET MESSAGE_TEXT = 'Only accepted articles can be published';
+            SET MESSAGE_TEXT = 'Only articles submitted to an organization can be published';
     END IF;
 END$$
 
@@ -907,12 +916,16 @@ SELECT
     m.article_id,
     m.title,
     TRIM(CONCAT_WS(' ', a.title, a.first_name, a.last_name)) AS author_name,
+    p.organization_name,
     p.doi,
     p.article_url,
     p.volume,
     p.issue,
     p.pages,
-    p.publication_date
+    p.publication_date,
+    p.published_file_name,
+    p.published_file_path,
+    p.published_file_type
 FROM publications p
 JOIN articles m ON m.article_id = p.article_id
 JOIN authors a ON a.author_id = m.author_id;

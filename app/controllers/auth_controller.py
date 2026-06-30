@@ -127,20 +127,20 @@ class AuthController:
                 "message": "Password and confirm password do not match.",
             }, 400
 
-        wants_admin_flow = requested_role in {"Admin", "Editor"} or is_chief_editor
+        wants_admin_flow = requested_role in {"Admin", "Editor", "Publication Team"} or is_chief_editor
         is_admin_actor = bool(actor and actor["role"] == "Admin")
 
         if wants_admin_flow:
             if not actor:
                 return {
                     "success": False,
-                    "message": "Admin token is required to create Admin or Editor accounts.",
+                    "message": "Admin token is required to create Admin, Editor, or Publication Team accounts.",
                 }, 401
 
             if not is_admin_actor:
                 return {
                     "success": False,
-                    "message": "Only Admin users can create Admin or Editor accounts.",
+                    "message": "Only Admin users can create Admin, Editor, or Publication Team accounts.",
                 }, 403
 
             if not requested_role:
@@ -150,10 +150,10 @@ class AuthController:
                 }, 400
 
             if actor["user_id"] == 1:
-                if requested_role not in {"Admin", "Editor"}:
+                if requested_role not in {"Admin", "Editor", "Publication Team"}:
                     return {
                         "success": False,
-                        "message": "Admin 1 can create only Admin or Editor accounts.",
+                        "message": "Admin 1 can create only Admin, Editor, or Publication Team accounts.",
                     }, 400
                 effective_role = requested_role
             else:
@@ -162,12 +162,12 @@ class AuthController:
                         "success": False,
                         "message": "Only Admin 1 can create Admin accounts.",
                     }, 403
-                if requested_role != "Editor":
+                if requested_role not in {"Editor", "Publication Team"}:
                     return {
                         "success": False,
-                        "message": "Admins can create only Editor accounts.",
+                        "message": "Admins can create only Editor or Publication Team accounts.",
                     }, 403
-                effective_role = "Editor"
+                effective_role = requested_role
 
             if effective_role == "Editor" and is_chief_editor and actor["user_id"] != 1:
                 return {
@@ -234,6 +234,13 @@ class AuthController:
                     last_name,
                     institution,
                     is_chief_editor,
+                )
+            elif effective_role == "Publication Team":
+                UserModel.create_publication_team_profile(
+                    connection,
+                    user_id,
+                    first_name,
+                    last_name,
                 )
             else:
                 raise ValueError("Unsupported role requested.")
