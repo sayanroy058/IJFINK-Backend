@@ -1,4 +1,4 @@
-﻿-- ====================================================
+-- ====================================================
 -- Journal Publication Management System Database
 -- MySQL 8.0
 -- ====================================================
@@ -654,7 +654,7 @@ AFTER INSERT ON editorial_assignment
 FOR EACH ROW
 BEGIN
     UPDATE articles
-    SET status = 'Chief Editor Review'
+    SET status = 'Editorial Review'
     WHERE article_id = NEW.article_id;
 END$$
 
@@ -977,3 +977,4 @@ SELECT
 FROM notifications n
 JOIN users u ON u.user_id = n.user_id
 WHERE n.is_read = FALSE;
+
