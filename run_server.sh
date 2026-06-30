@@ -16,7 +16,7 @@ PROJECT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 VENV_DIR="$PROJECT_DIR/venv"
 REQS_FILE="$PROJECT_DIR/requirements.txt"
 LOG_FILE="$PROJECT_DIR/gunicorn.log"
-BIND_ADDR="0.0.0.0:5000"
+BIND_ADDR="127.0.0.1:5000"
 WORKERS="4"
 GUNICORN_PATTERN="gunicorn -w ${WORKERS} -b ${BIND_ADDR} wsgi:app"
 
