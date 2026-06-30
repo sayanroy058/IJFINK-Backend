@@ -7,6 +7,8 @@ from app.views.user_view import user_blueprint
 from app.views.screening_view import screening_blueprint
 from app.views.editorial_view import editorial_blueprint
 from app.views.publication_view import publication_blueprint
+from app.views.editor_view import editor_blueprint
+from app.views.chief_editor_view import chief_editor_blueprint
 from config import DevelopmentConfig
 
 

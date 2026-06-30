@@ -272,6 +272,16 @@ class EditorialController:
                 assignment_id = cursor.lastrowid
 
                 cursor.execute(
+                    """
+                    UPDATE articles
+                    SET status = 'Editorial Review'
+                    WHERE article_id = %s
+                    """,
+                    (article_id,),
+                )
+
+
+                cursor.execute(
                     "SELECT assigned_at FROM editorial_assignment WHERE assignment_id = %s",
                     (assignment_id,),
                 )
@@ -607,3 +617,4 @@ class EditorialController:
             }, 404)
 
         return actor, profile, None
+
