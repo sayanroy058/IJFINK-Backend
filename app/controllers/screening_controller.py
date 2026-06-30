@@ -53,11 +53,12 @@ class ScreeningController:
                     a.submitted_at,
                     au.first_name,
                     au.last_name,
-                    au.email,
+                    u.email,
                     au.institution,
                     CASE WHEN a_s.screening_id IS NOT NULL THEN 'Screened' ELSE 'Pending' END as screening_status
                 FROM articles a
                 JOIN authors au ON a.author_id = au.author_id
+                JOIN users u ON au.user_id = u.user_id
                 LEFT JOIN admin_screening a_s ON a.article_id = a_s.article_id
                 WHERE a.status = 'Submitted' AND a_s.screening_id IS NULL
                 ORDER BY a.submitted_at ASC
@@ -132,12 +133,13 @@ class ScreeningController:
                     a.submitted_at,
                     au.first_name,
                     au.last_name,
-                    au.email,
+                    u.email,
                     au.institution,
                     au.phone_number,
                     au.orcid
                 FROM articles a
                 JOIN authors au ON a.author_id = au.author_id
+                JOIN users u ON au.user_id = u.user_id
                 WHERE a.article_id = %s
             """
             
