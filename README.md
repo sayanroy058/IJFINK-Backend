@@ -13,7 +13,8 @@ A Flask-based backend for the IJFINK application. It provides authentication, us
 
 ## Repository Structure
 
-- `app.py` - Application entrypoint
+- `app.py` - Local development entrypoint (`python app.py`)
+- `wsgi.py` - Production WSGI entrypoint used by Gunicorn (`wsgi:app`)
 - `config.py` - Flask configuration and environment variable loading
 - `database/__init__.py` - MySQL database connection helper
 - `app/__init__.py` - Flask application factory and blueprint registration
@@ -23,6 +24,7 @@ A Flask-based backend for the IJFINK application. It provides authentication, us
 - `requirements.txt` - Python dependency list
 - `SQL_Scripts_&_ERD/journaldb.sql` - Database schema script
 - `Test Cases/` - API tests (if present)
+- `README_Server.md` - VPS deployment guide (Gunicorn, firewall, Nginx, HTTPS)
 
 ## Requirements
 
@@ -30,18 +32,27 @@ A Flask-based backend for the IJFINK application. It provides authentication, us
 - MySQL server accessible from the application
 - `pip` for dependency installation
 
-## Setup
+## Setup (Local Development)
 
 1. Create and activate a virtual environment
+
+   Windows (PowerShell):
 
    ```powershell
    python -m venv venv
    .\venv\Scripts\Activate.ps1
    ```
 
+   macOS / Linux:
+
+   ```bash
+   python3 -m venv venv
+   source venv/bin/activate
+   ```
+
 2. Install dependencies
 
-   ```powershell
+   ```bash
    pip install -r requirements.txt
    ```
 
@@ -63,13 +74,21 @@ A Flask-based backend for the IJFINK application. It provides authentication, us
 
 ## Running the App
 
-Start the application with:
+For local development:
 
-```powershell
+```bash
 python app.py
 ```
 
 The application listens on `http://0.0.0.0:5000` by default.
+
+For production / VPS deployment with Gunicorn:
+
+```bash
+gunicorn -w 4 -b 0.0.0.0:5000 wsgi:app
+```
+
+See [README_Server.md](README_Server.md) for the full VPS setup (firewall, nohup/systemd, Nginx reverse proxy, HTTPS via Certbot).
 
 ## Environment Variables
 
