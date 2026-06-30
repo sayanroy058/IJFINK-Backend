@@ -18,6 +18,7 @@ __pycache__/
 *.log
 logs/
 uploads/
+Published/
 
 # OS
 .DS_Store

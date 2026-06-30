@@ -6,6 +6,7 @@ from app.views.contact_view import contact_blueprint
 from app.views.user_view import user_blueprint
 from app.views.screening_view import screening_blueprint
 from app.views.editorial_view import editorial_blueprint
+from app.views.publication_view import publication_blueprint
 from config import DevelopmentConfig
 
 
@@ -18,6 +19,7 @@ def create_app(config_object=DevelopmentConfig):
     app.register_blueprint(user_blueprint, url_prefix="/api/user")
     app.register_blueprint(screening_blueprint, url_prefix="/api/screening")
     app.register_blueprint(editorial_blueprint, url_prefix="/api/editorial")
+    app.register_blueprint(publication_blueprint, url_prefix="/api/publication")
 
     @app.get("/health")
     def health_check():

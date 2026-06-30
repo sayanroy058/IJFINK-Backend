@@ -34,6 +34,7 @@ class Config:
     SECRET_KEY = os.getenv('SECRET_KEY')
     DEBUG = _env_bool('DEBUG', False)
     UPLOAD_ROOT = os.getenv('UPLOAD_ROOT', os.path.join(BASE_DIR, 'uploads'))
+    PUBLISHED_ROOT = os.getenv('PUBLISHED_ROOT', os.path.join(BASE_DIR, 'Published'))
 
 
 class DevelopmentConfig(Config):
