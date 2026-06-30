@@ -11,6 +11,7 @@ import io
 import json
 import os
 import sys
+import secrets
 import time
 import uuid
 from datetime import datetime
@@ -26,15 +27,36 @@ AUTH_ENDPOINT = f"{BASE_URL}/api/auth"
 USER_ENDPOINT = f"{BASE_URL}/api/user"
 
 
+RUN_ID = f"{int(time.time())}{uuid.uuid4().hex[:8]}"
+
+
+def generate_unique_email(prefix):
+    return f"{prefix}.{RUN_ID}@example.com"
+
+
+def generate_unique_orcid():
+    digits = [secrets.randbelow(10) for _ in range(15)]
+    total = 0
+
+    for digit in digits:
+        total = (total + digit) * 2
+
+    remainder = total % 11
+    check_digit = (12 - remainder) % 11
+    check_character = "X" if check_digit == 10 else str(check_digit)
+    orcid_digits = "".join(str(digit) for digit in digits) + check_character
+    return "-".join(orcid_digits[index : index + 4] for index in range(0, 16, 4))
+
+
 TEST_AUTHOR_REGISTRATION = {
     "first_name": "Article",
     "last_name": "Author",
-    "email": f"article.author.{int(time.time())}.{uuid.uuid4().hex[:6]}@example.com",
+    "email": generate_unique_email("article.author"),
     "password": "ArticleAuthor@123",
     "confirm_password": "ArticleAuthor@123",
     "institution": "IJFINK Test Institute",
     "role": "Author",
-    "orcid": "0000-0000-0000-000X",
+    "orcid": generate_unique_orcid(),
 }
 
 
@@ -47,16 +69,16 @@ ARTICLE_PAYLOAD = {
     "co_authors": [
         {
             "full_name": "Co Author One",
-            "email": "coauthor.one@example.com",
+            "email": generate_unique_email("coauthor.one"),
             "institution": "Institute One",
-            "orcid": "0000-0000-0000-0001",
+            "orcid": generate_unique_orcid(),
             "author_order": 1,
         },
         {
             "full_name": "Co Author Two",
-            "email": "coauthor.two@example.com",
+            "email": generate_unique_email("coauthor.two"),
             "institution": "Institute Two",
-            "orcid": "0000-0000-0000-0002",
+            "orcid": generate_unique_orcid(),
             "author_order": 2,
         },
     ],
@@ -217,6 +239,50 @@ def register_author(registration_data):
     return None
 
 
+def assert_failure(response, expected_statuses, success_message, error_message):
+    if response["status_code"] in expected_statuses:
+        print_success(success_message)
+        return True
+
+    print_error(error_message)
+    return False
+
+
+def test_registration_rejects_mismatched_passwords():
+    print_section("TEST: REGISTRATION REJECTS MISMATCHED PASSWORDS")
+    payload = dict(TEST_AUTHOR_REGISTRATION)
+    payload["email"] = generate_unique_email("article.author.invalid")
+    payload["orcid"] = generate_unique_orcid()
+    payload["confirm_password"] = "WrongPassword@123"
+
+    print_request("POST", f"{AUTH_ENDPOINT}/register", body=payload)
+    response = send_request("POST", f"{AUTH_ENDPOINT}/register", json_body=payload)
+    print_response(response)
+
+    assert_failure(
+        response,
+        {400, 422},
+        "Registration correctly rejected mismatched passwords.",
+        "Registration should reject mismatched passwords.",
+    )
+
+
+def test_registration_rejects_duplicate_email():
+    print_section("TEST: REGISTRATION REJECTS DUPLICATE EMAIL")
+    payload = dict(TEST_AUTHOR_REGISTRATION)
+
+    print_request("POST", f"{AUTH_ENDPOINT}/register", body=payload)
+    response = send_request("POST", f"{AUTH_ENDPOINT}/register", json_body=payload)
+    print_response(response)
+
+    assert_failure(
+        response,
+        {400, 409},
+        "Registration correctly rejected duplicate email.",
+        "Registration should reject duplicate email.",
+    )
+
+
 def build_submission_files():
     return [
         ("main_manuscript", ("main-manuscript.txt", b"Main manuscript content", "text/plain")),
@@ -328,6 +394,26 @@ def test_author_auth_required():
         print_error("Endpoint should reject unauthenticated access.")
 
 
+def test_login_rejects_wrong_password():
+    print_section("TEST: LOGIN REJECTS WRONG PASSWORD")
+    payload = {
+        "email": TEST_AUTHOR_REGISTRATION["email"],
+        "password": "DefinitelyWrong@123",
+        "role": "Author",
+    }
+
+    print_request("POST", f"{AUTH_ENDPOINT}/login", body=payload)
+    response = send_request("POST", f"{AUTH_ENDPOINT}/login", json_body=payload)
+    print_response(response)
+
+    assert_failure(
+        response,
+        {400, 401},
+        "Login correctly rejected invalid credentials.",
+        "Login should reject invalid credentials.",
+    )
+
+
 def main():
     print(f"\n{Colors.BLUE}")
     print("╔" + "=" * 78 + "╗")
@@ -357,6 +443,10 @@ def main():
     registered_user = register_author(TEST_AUTHOR_REGISTRATION)
     if not registered_user:
         return
+
+    test_registration_rejects_mismatched_passwords()
+    test_registration_rejects_duplicate_email()
+    test_login_rejects_wrong_password()
 
     token, user = login(
         {
