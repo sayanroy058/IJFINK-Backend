@@ -58,8 +58,10 @@ def get_all_contact_queries():
     
     Query parameters:
         - status: Filter by status (Pending, Resolved)
-        - assigned_to_me: Filter queries assigned to current admin (true/false)
-    
+
+    Every authenticated Admin can see every contact query; no other role
+    has access to this endpoint.
+
     Returns:
         - 200: List of contact queries
         - 401: Missing or invalid JWT token
@@ -69,7 +71,6 @@ def get_all_contact_queries():
     authorization_header = request.headers.get("Authorization")
     filters = {
         "status": request.args.get("status"),
-        "assigned_to_me": request.args.get("assigned_to_me", "false"),
     }
 
     try:
