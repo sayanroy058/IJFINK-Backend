@@ -1,4 +1,5 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 
 from app.views.auth_view import auth_blueprint
 from app.views.admin_view import admin_blueprint
@@ -15,6 +16,7 @@ from config import DevelopmentConfig
 def create_app(config_object=DevelopmentConfig):
     app = Flask(__name__)
     app.config.from_object(config_object)
+    CORS(app)
     app.register_blueprint(auth_blueprint, url_prefix="/api/auth")
     app.register_blueprint(admin_blueprint, url_prefix="/api/admin")
     app.register_blueprint(contact_blueprint, url_prefix="/api/contact")
