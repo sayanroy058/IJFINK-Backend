@@ -24,9 +24,11 @@ ROLE_ALIASES = {
 }
 
 ROLE_DASHBOARD_MAP = {
-    "Author": "/dashboard/author",
-    "Admin": "/dashboard/admin",
-    "Publication Team": "/dashboard/publication-team",
+    "Author": "/user/dashboard",
+    "Admin": "/admin/dashboard",
+    "Editor": "/editor/dashboard",
+    "Chief Editor": "/chief-editor/dashboard",
+    "Publication Team": "/publication-team/dashboard",
 }
 
 
